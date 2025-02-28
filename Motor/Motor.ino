@@ -73,6 +73,26 @@ void loop() {
     delay(100); // Poll every 100ms
   }
 
+  // Step 2.5: Ask user if they want a kickstart
+  Serial.println("Kickstart swing? Press + (Increase) for Yes, - (Decrease) for No.");
+  bool kickstartEnabled = false;
+
+  while (true) {
+    if (digitalRead(buttonIncrease) == LOW) { // User pressed +
+      kickstartEnabled = true;
+      Serial.println("Kickstart enabled.");
+      delay(300);
+      break;
+    }
+    if (digitalRead(buttonDecrease) == LOW) { // User pressed -
+      kickstartEnabled = false;
+      Serial.println("Kickstart skipped.");
+      delay(300);
+      break;
+    }
+  }
+
+
 
   // Step 3: 5-second delay before starting the main loop
   Serial.println("Starting in 5 seconds...");
@@ -85,60 +105,72 @@ void loop() {
 
 
   while (millis() - startTime < runTime) {
+    if (kickstartEnabled) {
+      kickstart(); // Call the kickstart function if user chose Yes
+    }
+      
     swing();
     Serial.println("Swinging");
 
 
   }
 
-
   // Step 5: Ask the user to start again
   Serial.println("Time completed. Start again?");
   delay(1000); // Small delay before prompting again
 }
 
-
-
-
 void swing() {
 
+    int Rreading = digitalRead(Rinput); //read the IMPU input values from ther other arduino
+    int Lreading = digitalRead(Linput);
+    int Spdreading = analogRead(speedinput) ;
+    int Potreading = analogRead(potpint); //read potentiometer
+    
+    int speed = map(Potreading, 0, 1023, 0, maxPWM); //convert the potentiometer readings to the speed range of 0-255
+    int taper = map(Spdreading, 0,1023, 0, 100);
+    
+    Serial.println(Rreading);
+    Serial.println(Lreading);
 
-  int Rreading = digitalRead(Rinput); //read the IMPU input values from ther other arduino
- int Lreading = digitalRead(Linput);
- int Spdreading = analogRead(speedinput) ;
- int Potreading = analogRead(potpint); //read potentiometer
+    if (Lreading == HIGH) {
+      if(Spdreading < speedcutoff) {
+          Serial.println("left_taper")
+          motor.setSpeed(taper);
+      } else {
+          Serial.println("left");
+          motor.setSpeed(speed);
+      }
+     } else if (Rreading == HIGH) {
+         if(Spdreading < speedcutoff) {
+            Serial.println("right_taper")
+            motor.setSpeed(-taper);
+          } else {
+              Serial.println("right");
+              motor.setSpeed(-speed);
+          }
+      } else {
+       motor.setSpeed(0);
+       Serial.println("still");
+     }
+     // Delay for readability
+     delay(100);
+}
 
+void kickstart() {
+  Serial.println("Applying kickstart...");
 
-int speed = map(Potreading, 0, 1023, 0, maxPWM); //convert the potentiometer readings to the speed range of 0-255
-int taper = map(Spdreading, 0,1023, 0, 100);
+  // Strong push in one direction
+  motor.setSpeed(maxPWM);
+  delay(500);
 
+  // Reverse briefly to stabilize
+  motor.setSpeed(-maxPWM);
+  delay(500);
 
- Serial.println(Rreading);
- Serial.println(Lreading);
+  // Stop to allow natural swing motion
+  motor.setSpeed(0);
+  delay(200);
 
-
-
-
- if (Lreading == HIGH) {
-    if(Spdreading < speedcutoff) {
-      Serial.println("left_taper")
-      motor.setSpeed(taper);
-   } else {
-      Serial.println("left");
-      motor.setSpeed(speed);
-  }
- } else if (Rreading == HIGH) {
-     if(Spdreading < speedcutoff) {
-      Serial.println("right_taper")
-      motor.setSpeed(-taper);
-  } else {
-      Serial.println("right");
-      motor.setSpeed(-speed);
-  }
- }  else  {
-   motor.setSpeed(0);
-   Serial.println("still");
- }
- // Delay for readability
- delay(100);
+  Serial.println("Kickstart complete.");
 }
