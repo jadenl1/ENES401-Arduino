@@ -1,30 +1,26 @@
 #include <Wire.h>
-#include "MPU6050.h" // IMU library, will need to download from online
+#include "MPU6050.h"
 
-int RPWM = 3;  // digital Output to motor
-int LPWM = 10;
+const int RPWM = 3;
+const int LPWM = 10;
+const int taperpin = 11;
 
-int taperpin = 11; // digital output to motor
-
-
-float sensitivity = 5.0; // offset for sensitivity
-float speed = 0; //initial global speed variable
+float sensitivity = 5.0;
 
 MPU6050 mpu;
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
+  Wire.begin();                 // uses SDA=A4, SCL=A5 automatically
 
-  // Initialize the MPU6050
   mpu.initialize();
-  //initialize pins
+  mpu.setSleepEnabled(false);   // wake the MPU‑6050
+
   pinMode(LPWM, OUTPUT);
   pinMode(RPWM, OUTPUT);
   pinMode(taperpin, OUTPUT);
 
-  // Check if the MPU6050 is connected
-  if (mpu.testConnection()) {
+  if (mpu.testConnection()){
     Serial.println("MPU6050 is connected.");
   } else {
     Serial.println("MPU6050 connection failed.");
@@ -32,26 +28,13 @@ void setup() {
 }
 
 void loop() {
-  // Read the gyroscope values
   int16_t gx, gy, gz;
   mpu.getRotation(&gx, &gy, &gz);
 
-  // Convert to degrees per second
-  float gyroX1 = gx / 131.0; // Scale factor for MPU6050
-  speed = abs(gyroX1);
+  float gyroX = gx / 131.0;     // dps
+//  Serial.println(gyroX);
 
-  Serial.println(speed); // Print the gyroscope velocity
-
-  // Handle PWM irection
-  if (gyroX1 > sensitivity) {
-    digitalWrite(LPWM, HIGH); // Drive left
-    digitalWrite(RPWM, LOW);
-  } else if (gyroX1 < -sensitivity) {
-    digitalWrite(RPWM, HIGH); // Drive right
-    digitalWrite(LPWM, LOW);
-
-  } else {
-    digitalWrite(RPWM, LOW); //stop motor
-    digitalWrite(LPWM, LOW);
-  }
+  if (gyroX >  sensitivity) { digitalWrite(LPWM, HIGH); digitalWrite(RPWM, LOW); }
+  else if (gyroX < -sensitivity){ digitalWrite(RPWM, HIGH); digitalWrite(LPWM, LOW); }
+  else { digitalWrite(RPWM, LOW); digitalWrite(LPWM, LOW); }
 }

@@ -187,7 +187,6 @@ void swing() {
 
 int Rreading = digitalRead(Rinput); //read the IMPU input values from ther other arduino
 int Lreading = digitalRead(Linput);
-
 int Potreading = 1023 - analogRead(potpin); //read potentiometer
 
 
@@ -197,15 +196,15 @@ int speed = map(Potreading, 25, 1023, 0, maxPWM); //convert the potentiometer re
  if (Lreading == HIGH) { //if left reading is high, turn motor counter clockwise
       Serial.println("left");
       motor.setSpeed(speed);
-//      Serial.println(speed);
+      Serial.println(speed);
   
  } else if (Rreading == HIGH) { // if right reading is high, turn motor clockwise
       Serial.println("right");
       motor.setSpeed(-speed);
-//      Serial.println(-speed);
+      Serial.println(-speed);
   }else  {
    motor.setSpeed(0); // if the IMU signals zero velocity, turn motor off
-//   Serial.println(speed);
+   Serial.println(speed);
  }
 }
 
